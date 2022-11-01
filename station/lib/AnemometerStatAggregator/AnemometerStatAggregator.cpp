@@ -4,43 +4,48 @@
 #ifndef ANEMOMETER_STAT_AGGREGATOR_IMPL
 #define ANEMOMETER_STAT_AGGREGATOR_IMPL
 
-void AnemometerStatAggregator::append(AnemometerStats stat)
+bool AnemometerStatAggregator::append(double speed)
 {
-  buffer[end % ANEMOMETER_BUFFER_SIZE] = stat;
+  if (end >= ANEMOMETER_BUFFER_SIZE)
+  {
+    return false;
+  }
+  buffer[end] = speed;
   end++;
+  return true;
 }
 
-AnemometerStatsSet AnemometerStatAggregator::getAndReset()
+AnemometerStatsSet AnemometerStatAggregator::getStats()
 {
   AnemometerStatsSet statsSet;
-  statsSet.min.rotationsPerSecond = DBL_MAX;
-  statsSet.max.rotationsPerSecond = DBL_MIN;
+  statsSet.min = DBL_MAX;
+  statsSet.max = DBL_MIN;
 
-  int start = end < ANEMOMETER_BUFFER_SIZE ? 0 : end + 1; 
-  int length = end < ANEMOMETER_BUFFER_SIZE ? end : ANEMOMETER_BUFFER_SIZE;
-
-  for (int i = start; i < start + length; i++)
+  for (int i = 0; i < end; i++)
   {
-    AnemometerStats stats = buffer[i % ANEMOMETER_BUFFER_SIZE];
+    double speed = buffer[i % ANEMOMETER_BUFFER_SIZE];
 
-    statsSet.average.metersPerSecond += stats.metersPerSecond;
-    statsSet.average.rotationsPerSecond += stats.rotationsPerSecond;
+    statsSet.average += speed;
 
-    if (stats.rotationsPerSecond > statsSet.max.rotationsPerSecond) {
-      statsSet.max = stats;
+    if (speed > statsSet.max)
+    {
+      statsSet.max = speed;
     }
 
-    if (stats.rotationsPerSecond < statsSet.max.rotationsPerSecond) {
-      statsSet.min = stats;
+    if (speed < statsSet.min)
+    {
+      statsSet.min = speed;
     }
   }
 
-  statsSet.average.metersPerSecond = statsSet.average.metersPerSecond / double(length);
-  statsSet.average.rotationsPerSecond = statsSet.average.rotationsPerSecond / double(length);
-
-  end = 0;  
+  statsSet.average = statsSet.average / double(end);
 
   return statsSet;
+}
+
+void AnemometerStatAggregator::reset()
+{
+  end = 0;
 }
 
 #endif

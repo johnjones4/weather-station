@@ -2,12 +2,6 @@
 #ifndef ANEMOMETER_H
 #define ANEMOMETER_H
 
-typedef struct AnemometerStats
-{
-  double rotationsPerSecond;
-  double metersPerSecond;
-} AnemometerStats;
-
 class Anemometer
 {
 private:
@@ -24,7 +18,7 @@ public:
   Anemometer(int _pin, int _debounceWait, double _circumfrence);
   void reset();
   void takeReading();
-  AnemometerStats getStats();
+  double getSpeed();
 };
 
 #endif

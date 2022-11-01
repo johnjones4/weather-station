@@ -5,23 +5,17 @@ import (
 	"time"
 )
 
-type AnemometerValue struct {
-	RotationsPerSecond float64 `json:"rotationsPerSecond"`
-	MetersPerSecond    float64 `json:"metersPerSecond"`
-}
-
 type Weather struct {
-	Timestamp                    time.Time       `json:"timestamp"`
-	AnemometerMin                AnemometerValue `json:"anemometerMin"`
-	AnemometerMax                AnemometerValue `json:"anemometerMax"`
-	AnemometerAverage            AnemometerValue `json:"anemometerAverage"`
-	WindSpeed                    float64         `json:"windSpeed"`
-	VaneDirection                float64         `json:"vaneDirection"`
-	Temperature                  float64         `json:"temperature"`
-	TemperatureCalibrationFactor float64         `json:"temperatureCalibrationFactor"`
-	Pressure                     float64         `json:"pressure"`
-	Gas                          float64         `json:"gas"`
-	RelativeHumidity             int             `json:"relativeHumidity"`
+	Timestamp                    time.Time `json:"timestamp"`
+	AnemometerMin                float64   `json:"anemometerMin"`
+	AnemometerMax                float64   `json:"anemometerMax"`
+	AnemometerAverage            float64   `json:"anemometerAverage"`
+	VaneDirection                float64   `json:"vaneDirection"`
+	Temperature                  float64   `json:"temperature"`
+	TemperatureCalibrationFactor float64   `json:"temperatureCalibrationFactor"`
+	Pressure                     int       `json:"pressure"`
+	Gas                          int       `json:"gas"`
+	RelativeHumidity             float64   `json:"relativeHumidity"`
 }
 
 type Store interface {

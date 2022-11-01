@@ -14,7 +14,6 @@ func main() {
 	tx := []core.Transformer{
 		transformers.AddDate,
 		transformers.AdjustTemperature,
-		transformers.CalculateWindSpeed,
 	}
 
 	db, err := store.NewPGStore(context.Background(), os.Getenv("POSTGRES_URL"))

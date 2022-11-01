@@ -28,16 +28,12 @@ void Anemometer::takeReading()
   }
 }
 
-AnemometerStats Anemometer::getStats()
+double Anemometer::getSpeed()
 {
-  AnemometerStats stats;
   unsigned long now = millis();
   double secondsElapsed = double(now - startTime);
-  double rotationsD = double(rotations);
-  stats.rotationsPerSecond = rotationsD / secondsElapsed;
-  double meters = circumfrence * rotationsD;
-  stats.metersPerSecond = meters / secondsElapsed;
-  return stats;
+  double meters = circumfrence * double(rotations);
+  return meters / secondsElapsed;
 }
 
 #endif

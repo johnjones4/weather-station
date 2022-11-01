@@ -9,15 +9,15 @@
 #include <AnemometerStatAggregator.h>
 #include <Period.h>
 #include <secrets.h>
-#include <WeatherLogger.h>
+#include <Logger.h>
 #include <Weathervane.h>
 
 #define MINOR_PERIOD_SECONDS 5
-#define MAJOR_PERIOD_SECONDS 60
+#define MAJOR_PERIOD_SECONDS 300
 
 #define ANEMOMETER_PIN 33
 #define ANEMOMETER_DEBOUNCE 100
-#define ANEMOMETER_CIRCUMFERENCE 0.50265482457
+#define ANEMOMETER_CIRCUMFERENCE 0.502654824574
 
 Adafruit_BME680 bme;
 
@@ -29,10 +29,11 @@ AnemometerStatAggregator anemometerStatAggregator;
 Period minorPeriod(MINOR_PERIOD_SECONDS * 1000);
 Period majorPeriod(MAJOR_PERIOD_SECONDS * 1000);
 
-WeatherLogger logger(POST_URL);
+Logger logger(POST_URL);
 
 void fatal() 
 {
+  Serial.println("Fatal error ... rebooting");
   delay(1000);
   ESP.restart();
 }
@@ -42,10 +43,12 @@ bool initWifi()
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   const unsigned long start = millis();
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(1000);
     Serial.println("Establishing connection to WiFi..");
-    if (millis() - start > 60000) {
+    if (millis() - start > 60000)
+    {
       return false;
     }
   }
@@ -63,7 +66,7 @@ void setup()
 
   if (!initWifi()) 
   {
-    Serial.println("WiFi timeout ... rebooting");
+    Serial.println("WiFi timeout");
     fatal();
   }
 
@@ -79,7 +82,8 @@ void setup()
   bme.setGasHeater(320, 150); // 320*C for 150 ms 
   bme.beginReading();
 
-  if (!weatherVane.begin()) {
+  if (!weatherVane.begin())
+  {
     Serial.println("Could not find a valid MCP23017 sensor, check wiring!");
     fatal();
   }
@@ -95,11 +99,15 @@ void loop()
   // Do our minor period things
   if (minorPeriod.isComplete())
   {
-    AnemometerStats stats = anemometer.getStats();
+    double speed = anemometer.getSpeed();
+
+    if (!anemometerStatAggregator.append(speed))
+    {
+      Serial.println("Anemometer buffer full");
+      fatal();
+    }
+
     anemometer.reset();
-
-    anemometerStatAggregator.append(stats);
-
     minorPeriod.reset();
   }
 
@@ -118,21 +126,23 @@ void loop()
       fatal();
     }
 
-    WeatherLoggerData data;
-    data.anemometerStatsSet = anemometerStatAggregator.getAndReset();
+    LoggerData data;
+    data.anemometerStatsSet = anemometerStatAggregator.getStats();
     data.gas = bme.gas_resistance;
     data.humidity = bme.humidity;
     data.pressure = bme.pressure;
     data.temperature = bme.temperature;
     data.vaneDirection = weatherVane.direction;
 
-    if (!logger.postWeather(data)) {
+    if (!logger.post(data))
+    {
       Serial.println("Bad HTTP response");
       fatal();
     }
 
     esp_task_wdt_reset();
 
+    anemometerStatAggregator.reset();
     majorPeriod.reset();
   }
 }
