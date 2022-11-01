@@ -16,15 +16,17 @@ func New(store core.Store, transformers []core.Transformer) http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
+	r.Route("/api", func(r chi.Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
 
-	r.Get("/health", newHealthHandler(store))
+		r.Get("/health", newHealthHandler(store))
 
-	r.Route("/weather", func(r chi.Router) {
-		r.Post("/", newPostWeatherHandler(store, transformers))
-		r.Get("/", newGetWeathersHandler(store))
+		r.Route("/weather", func(r chi.Router) {
+			r.Post("/", newPostWeatherHandler(store, transformers))
+			r.Get("/", newGetWeathersHandler(store))
+		})
 	})
 
 	return r
