@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"main/core"
+	"main/transformers"
 	"net/http"
 	"time"
 )
@@ -52,9 +53,19 @@ func newGetWeathersHandler(store core.Store) http.HandlerFunc {
 			return
 		}
 
-		resp := map[string]any{
-			"items": weathers,
+		resp := map[string]any{}
+
+		units := r.URL.Query().Get("units")
+		if units == "imperial" {
+			imperialWeathers := make([]core.WeatherImperial, len(weathers))
+			for i, w := range weathers {
+				imperialWeathers[i] = transformers.ConvertToImperial(w)
+			}
+			resp["items"] = imperialWeathers
+		} else {
+			resp["items"] = weathers
 		}
+
 		jsonResponse(w, http.StatusOK, resp)
 	}
 }
