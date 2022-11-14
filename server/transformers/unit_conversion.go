@@ -14,7 +14,7 @@ func ConvertToImperial(weather core.Weather) core.WeatherImperial {
 	w.AnemometerMax = mpsToMph(weather.AnemometerMax)
 	w.AnemometerMin = mpsToMph(weather.AnemometerMin)
 	w.Temperature = weather.Temperature*1.8 + 32
-	w.Pressure = float64(weather.Pressure) * 0.02953
+	w.Pressure = float64(weather.Pressure) / 100 * 0.02953
 	return w
 }
 

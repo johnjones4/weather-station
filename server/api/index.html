@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Weather</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+  </head>
+  <body>
+    <h1>Weather as of <span id="timestamp"></span>:</h1>
+    <ul>
+      <li>Temperature: <span id="temperature"></span>° F</li>
+      <li>Wind Speed: <span id="windSpeed"></span> MPH</li>
+      <li>Pressure: <span id="pressure"></span> inHg</li>
+      <li>Humidity: <span id="humidity"></span>%</li>
+    </ul>
+    <script>
+      const timestampEl = document.getElementById('timestamp')
+      const temperatureEl = document.getElementById('temperature')
+      const windSpeedEl = document.getElementById('windSpeed')
+      const pressureEl = document.getElementById('pressure')
+      const humidityEl = document.getElementById('humidity')
+      const load = async () => {
+        const res = await fetch('/api/weather?units=imperial')
+        const info = await res.json()
+        if (!info.items || !info.items.length) {
+          return
+        }
+        const weather = info.items[info.items.length -1]
+        
+        timestampEl.textContent = new Date(Date.parse(weather.timestamp)).toLocaleString()
+        temperatureEl.textContent = weather.temperature.toFixed(2)
+        windSpeedEl.textContent = weather.anemometerAverage.toFixed(2)
+        pressureEl.textContent = weather.pressure.toFixed(2)
+        humidityEl.textContent = weather.relativeHumidity.toFixed(2)
+      }
+      setInterval(load, 30000)
+      load()
+    </script>
+  </body>
+</html>

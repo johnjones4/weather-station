@@ -43,10 +43,10 @@ func readJson(r *http.Request, readTo any) error {
 	return nil
 }
 
-func readDateParameter(r *http.Request, param string) time.Time {
+func readDateParameter(r *http.Request, param string, defaultValue time.Time) time.Time {
 	str := r.URL.Query().Get(param)
 	if str == "" {
-		return time.Time{}
+		return defaultValue
 	}
 
 	t, err := time.Parse(time.RFC3339, str)
