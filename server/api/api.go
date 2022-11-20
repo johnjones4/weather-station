@@ -16,11 +16,9 @@ func New(store core.Store, transformers []core.Transformer) http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Route("/api", func(r chi.Router) {
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		})
+	r.Get("/", indexHandler)
 
+	r.Route("/api", func(r chi.Router) {
 		r.Get("/health", newHealthHandler(store))
 
 		r.Route("/weather", func(r chi.Router) {
