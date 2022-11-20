@@ -15,8 +15,8 @@
 #define MINOR_PERIOD_SECONDS 5
 #define MAJOR_PERIOD_SECONDS 300
 
-#define ANEMOMETER_PIN 33
-#define ANEMOMETER_DEBOUNCE 100
+#define ANEMOMETER_PIN 34
+#define ANEMOMETER_DEBOUNCE 200
 #define ANEMOMETER_CIRCUMFERENCE 0.502654824574
 
 Adafruit_BME680 bme;
@@ -60,7 +60,7 @@ void setup()
   esp_task_wdt_init(MAJOR_PERIOD_SECONDS * 5, true);
   esp_task_wdt_add(NULL);
   
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   Serial.println("Starting up");
 

@@ -20,6 +20,7 @@ bool Logger::post(LoggerData data)
   doc["anemometerMin"] = data.anemometerStatsSet.min;
   doc["anemometerMax"] = data.anemometerStatsSet.max;
   doc["anemometerAverage"] = data.anemometerStatsSet.average;
+  doc["vaneDirection"] = data.vaneDirection;
 
   String postData;
   serializeJson(doc, postData);

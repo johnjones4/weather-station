@@ -12,6 +12,7 @@ private:
 
 // State
   int rotations;
+  bool lastState = false;
   unsigned long lastReadTime;
   unsigned long startTime;
 public:

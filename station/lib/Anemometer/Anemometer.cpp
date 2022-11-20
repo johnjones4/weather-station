@@ -7,24 +7,29 @@
 Anemometer::Anemometer(int _pin, int _debounceWait, double _circumfrence)
 {
   pin = _pin;
+  pinMode(pin, INPUT);
   debounceWait = _debounceWait;
   circumfrence = _circumfrence;
+  lastReadTime = millis();
   reset();
 }
 
 void Anemometer::reset()
 {
   rotations = 0;
-  lastReadTime = startTime = millis();
 }
 
 void Anemometer::takeReading()
 {
-  int val = analogRead(pin);
+  int val = digitalRead(pin);
   unsigned long now = millis();
-  if (val == 0 && now - lastReadTime > debounceWait) {
+  bool state = val == 0;
+  if (state && !lastState && now - lastReadTime > debounceWait) {
     rotations++;
     lastReadTime = now;
+    lastState = true;
+  } else if (!state) {
+    lastState = false;
   }
 }
 
