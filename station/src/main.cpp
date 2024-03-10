@@ -12,7 +12,7 @@
 #include <Logger.h>
 #include <Weathervane.h>
 
-#define MINOR_PERIOD_SECONDS 5
+#define MINOR_PERIOD_SECONDS 10
 #define MAJOR_PERIOD_SECONDS 300
 
 #define ANEMOMETER_PIN 34
@@ -100,6 +100,7 @@ void loop()
   if (minorPeriod.isComplete())
   {
     double speed = anemometer.getSpeed();
+    Serial.printf("Speed: %f\n", speed);
 
     if (!anemometerStatAggregator.append(speed))
     {

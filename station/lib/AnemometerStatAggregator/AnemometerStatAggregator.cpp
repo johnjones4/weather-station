@@ -17,6 +17,10 @@ bool AnemometerStatAggregator::append(double speed)
 
 AnemometerStatsSet AnemometerStatAggregator::getStats()
 {
+  if (end == 0) {
+    return AnemometerStatsSet{0,0,0};
+  }
+  
   AnemometerStatsSet statsSet;
   statsSet.min = DBL_MAX;
   statsSet.max = DBL_MIN;

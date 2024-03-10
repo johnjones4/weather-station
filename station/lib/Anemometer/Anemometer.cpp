@@ -11,21 +11,25 @@ Anemometer::Anemometer(int _pin, int _debounceWait, double _circumfrence)
   debounceWait = _debounceWait;
   circumfrence = _circumfrence;
   lastReadTime = millis();
+  currentReadingIndex = 0;
   reset();
 }
 
 void Anemometer::reset()
 {
-  rotations = 0;
+  currentReadingIndex = 0;
+  lastReadTime = millis();
 }
 
 void Anemometer::takeReading()
 {
   int val = digitalRead(pin);
-  unsigned long now = millis();
   bool state = val == 0;
-  if (state && !lastState && now - lastReadTime > debounceWait) {
-    rotations++;
+  unsigned long now = millis();
+  unsigned long elapsed = now - lastReadTime;
+  if (state && !lastState && elapsed > debounceWait) {
+    readings[currentReadingIndex % ANEMOMETER_BUFFER_SIZE] = elapsed;
+    currentReadingIndex++;
     lastReadTime = now;
     lastState = true;
   } else if (!state) {
@@ -35,10 +39,17 @@ void Anemometer::takeReading()
 
 double Anemometer::getSpeed()
 {
-  unsigned long now = millis();
-  double secondsElapsed = double(now - startTime);
-  double meters = circumfrence * double(rotations);
-  return meters / secondsElapsed;
+  unsigned long min = ULONG_MAX;
+  for (int i = 0; i < currentReadingIndex; i++) {
+    Serial.printf("Reading at %d: %lu", i, readings[currentReadingIndex]);
+    if (readings[currentReadingIndex] < min) {
+      min = readings[currentReadingIndex];
+    }
+  }
+  if (min == ULONG_MAX) {
+    return 0;
+  }
+  return circumfrence / (double)min;
 }
 
 #endif

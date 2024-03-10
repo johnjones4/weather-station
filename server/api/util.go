@@ -3,15 +3,16 @@ package api
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
-func jsonResponse(w http.ResponseWriter, status int, info any) {
+func jsonResponse(w http.ResponseWriter, status int, info any, log *zap.SugaredLogger) {
 	bytes, err := json.Marshal(info)
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -21,12 +22,13 @@ func jsonResponse(w http.ResponseWriter, status int, info any) {
 	w.Write(bytes)
 }
 
-func errorResponse(w http.ResponseWriter, status int, err error) {
+func errorResponse(w http.ResponseWriter, status int, err error, log *zap.SugaredLogger) {
+	log.Error(err)
 	msg := map[string]any{
 		"ok":      false,
 		"message": err.Error(),
 	}
-	jsonResponse(w, status, msg)
+	jsonResponse(w, status, msg, log)
 }
 
 func readJson(r *http.Request, readTo any) error {

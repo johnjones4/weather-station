@@ -2,6 +2,8 @@
 #ifndef ANEMOMETER_H
 #define ANEMOMETER_H
 
+#define ANEMOMETER_BUFFER_SIZE 1000
+
 class Anemometer
 {
 private:
@@ -11,10 +13,10 @@ private:
   unsigned long debounceWait;
 
 // State
-  int rotations;
   bool lastState = false;
   unsigned long lastReadTime;
-  unsigned long startTime;
+  unsigned long readings[ANEMOMETER_BUFFER_SIZE];
+  int currentReadingIndex = 0;
 public:
   Anemometer(int _pin, int _debounceWait, double _circumfrence);
   void reset();
