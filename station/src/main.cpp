@@ -16,7 +16,7 @@
 #define MAJOR_PERIOD_SECONDS 300
 
 #define ANEMOMETER_PIN 34
-#define ANEMOMETER_DEBOUNCE 200
+#define ANEMOMETER_DEBOUNCE 125
 #define ANEMOMETER_CIRCUMFERENCE 0.502654824574
 
 Adafruit_BME680 bme;
@@ -95,6 +95,11 @@ void loop()
 {
   // Take readings
   anemometer.takeReading();
+
+  if (!weatherVane.performReading()) {
+      Serial.println("Bad weather vane reading");
+      fatal();
+    }
 
   // Do our minor period things
   if (minorPeriod.isComplete())

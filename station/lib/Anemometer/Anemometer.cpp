@@ -41,7 +41,7 @@ double Anemometer::getSpeed()
 {
   unsigned long min = ULONG_MAX;
   for (int i = 0; i < currentReadingIndex; i++) {
-    Serial.printf("Reading at %d: %lu", i, readings[currentReadingIndex]);
+    Serial.printf("Reading at %d: %lu\n", i, readings[currentReadingIndex]);
     if (readings[currentReadingIndex] < min) {
       min = readings[currentReadingIndex];
     }
