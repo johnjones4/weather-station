@@ -8,32 +8,13 @@ import (
 	"main/transformers"
 	"net/http"
 	"os"
-	"strconv"
 
-	"github.com/johnjones4/errorbot"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 func main() {
-	chatId, err := strconv.Atoi(os.Getenv("TELEGRAM_CHAT_ID"))
-	if err != nil {
-		panic(err)
-	}
-	bot := errorbot.New(
-		"weather",
-		os.Getenv("TELEGRAM_TOKEN"),
-		chatId,
-	)
-
 	config := zap.NewDevelopmentConfig()
-	l, err := config.Build(zap.Hooks(bot.ZapHook([]zapcore.Level{
-		zapcore.FatalLevel,
-		zapcore.PanicLevel,
-		zapcore.DPanicLevel,
-		zapcore.ErrorLevel,
-		zapcore.WarnLevel,
-	})))
+	l, err := config.Build()
 	if err != nil {
 		panic(err)
 	}
@@ -46,9 +27,15 @@ func main() {
 		transformers.AdjustTemperature,
 	}
 
-	db, err := store.NewPGStore(context.Background(), os.Getenv("POSTGRES_URL"))
-	if err != nil {
-		panic(err)
+	var db core.Store
+	pg := os.Getenv("POSTGRES_URL")
+	if pg != "" {
+		db, err = store.NewPGStore(context.Background(), os.Getenv("POSTGRES_URL"))
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		db = store.NewMemoryStore()
 	}
 
 	r := api.New(db, tx, log)
