@@ -69,8 +69,8 @@ func newPostWeatherHandler(store core.Store, transformers []core.Transformer, lo
 }
 
 type weatherResponse struct {
-	Readings []core.Weather `json:"readings"`
-	Average  core.WeatherReading
+	Readings []core.Weather      `json:"readings"`
+	Average  core.WeatherReading `json:"average"`
 }
 
 func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.HandlerFunc {
