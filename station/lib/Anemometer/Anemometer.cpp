@@ -1,33 +1,20 @@
 #include <Arduino.h>
 #include "Anemometer.h"
 
-#ifndef ANEMOMETER_IMPL
-#define ANEMOMETER_IMPL
-
-Anemometer::Anemometer(int _pin, int _debounceWait, double _circumfrence)
+bool Anemometer::begin() 
 {
-  pin = _pin;
-  pinMode(pin, INPUT);
-  debounceWait = _debounceWait;
-  circumfrence = _circumfrence;
-  lastReadTime = millis();
-  currentReadingIndex = 0;
+  pinMode(ANEMOMETER_PIN, INPUT);
   reset();
+  return true;
 }
 
-void Anemometer::reset()
+void Anemometer::step()
 {
-  currentReadingIndex = 0;
-  lastReadTime = millis();
-}
-
-void Anemometer::takeReading()
-{
-  int val = digitalRead(pin);
+  int val = digitalRead(ANEMOMETER_PIN);
   bool state = val == 0;
   unsigned long now = millis();
   unsigned long elapsed = now - lastReadTime;
-  if (state && !lastState && elapsed > debounceWait) {
+  if (state && !lastState && elapsed > ANEMOMETER_DEBOUNCE) {
     readings[currentReadingIndex % ANEMOMETER_BUFFER_SIZE] = elapsed;
     currentReadingIndex++;
     lastReadTime = now;
@@ -35,21 +22,42 @@ void Anemometer::takeReading()
   } else if (!state) {
     lastState = false;
   }
+  if (now - firstReadTime > SPEED_CALC_WAIT) {
+    this->calculateSpeed();
+  }
 }
 
-double Anemometer::getSpeed()
+void Anemometer::recordWeather(WeatherReport* report)
+{
+  report->windSpeed = &currentSpeed;
+}
+
+
+
+
+
+void Anemometer::reset()
+{
+  currentReadingIndex = 0;
+  lastReadTime = millis();
+  firstReadTime = millis();
+  currentSpeed = 0;
+  lastState = false;
+}
+
+void Anemometer::calculateSpeed()
 {
   unsigned long min = ULONG_MAX;
   for (int i = 0; i < currentReadingIndex; i++) {
-    Serial.printf("Reading at %d: %lu\n", i, readings[currentReadingIndex]);
     if (readings[currentReadingIndex] < min) {
       min = readings[currentReadingIndex];
     }
   }
   if (min == ULONG_MAX) {
-    return 0;
+    return;
   }
-  return circumfrence / (double)min;
+  double nextSpeed = ANEMOMETER_CIRCUMFERENCE / (double)min;
+  if (nextSpeed > currentSpeed) {
+    currentSpeed = nextSpeed;
+  }
 }
-
-#endif

@@ -3,33 +3,23 @@
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <esp_task_wdt.h>
-#include <Adafruit_BME680.h>
 #include <Arduino.h>
-#include <Anemometer.h>
-#include <AnemometerStatAggregator.h>
-#include <Period.h>
 #include <secrets.h>
-#include <Logger.h>
+#include <BME680.h>
 #include <Weathervane.h>
+#include <Provider.h>
+#include <Logger.h>
+#include <Anemometer.h>
+#include <features.h>
+#include <Providers.h>
+#include <RainGauge.h>
 
-#define MINOR_PERIOD_SECONDS 10
-#define MAJOR_PERIOD_SECONDS 300
+#define WATCHDOG_WAIT 60000
+#define TRANSMIT_WAIT 300000
 
-#define ANEMOMETER_PIN 34
-#define ANEMOMETER_DEBOUNCE 125
-#define ANEMOMETER_CIRCUMFERENCE 0.502654824574
-
-Adafruit_BME680 bme;
-
-Weathervane weatherVane;
-
-Anemometer anemometer(ANEMOMETER_PIN, ANEMOMETER_DEBOUNCE, ANEMOMETER_CIRCUMFERENCE);
-AnemometerStatAggregator anemometerStatAggregator;
-
-Period minorPeriod(MINOR_PERIOD_SECONDS * 1000);
-Period majorPeriod(MAJOR_PERIOD_SECONDS * 1000);
-
-Logger logger(POST_URL);
+Providers providers;
+unsigned long lastTransmit;
+Logger logger(SERVER_URL);
 
 void fatal() 
 {
@@ -57,7 +47,7 @@ bool initWifi()
 
 void setup() 
 {
-  esp_task_wdt_init(MAJOR_PERIOD_SECONDS * 5, true);
+  esp_task_wdt_init(WATCHDOG_WAIT, true);
   esp_task_wdt_add(NULL);
   
   Serial.begin(9600);
@@ -70,85 +60,54 @@ void setup()
     fatal();
   }
 
-  if (!bme.begin()) 
-  {
-    Serial.println("Could not find a valid BME680 sensor, check wiring!");
-    fatal();
-  }
-  bme.setTemperatureOversampling(BME680_OS_8X);
-  bme.setHumidityOversampling(BME680_OS_2X);
-  bme.setPressureOversampling(BME680_OS_4X);
-  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
-  bme.setGasHeater(320, 150); // 320*C for 150 ms 
-  bme.beginReading();
+#ifdef F_ANEMOMETER
+  providers.add(new Anemometer());
+#endif
+#ifdef F_BME680
+  providers.add(new BME680());
+#endif
+#ifdef F_WEATHERVANE
+  providers.add(new Weathervane());
+#endif
+#ifdef F_RAINGAUGE
+  providers.add(new RainGauge());
+#endif
 
-  if (!weatherVane.begin())
-  {
-    Serial.println("Could not find a valid MCP23017 sensor, check wiring!");
-    fatal();
+  for (int i = 0; i < providers.size(); i++) {
+    if (!providers.at(i)->begin()) {
+      Serial.printf("Bad provider init at %d\n", i);
+      fatal();
+    }
   }
   
   Serial.println("Ready");
+
+  lastTransmit = millis();
 }
 
 void loop() 
 {
-  // Take readings
-  anemometer.takeReading();
+  esp_task_wdt_reset();
 
-  if (!weatherVane.performReading()) {
-      Serial.println("Bad weather vane reading");
-      fatal();
-    }
-
-  // Do our minor period things
-  if (minorPeriod.isComplete())
-  {
-    double speed = anemometer.getSpeed();
-    Serial.printf("Speed: %f\n", speed);
-
-    if (!anemometerStatAggregator.append(speed))
-    {
-      Serial.println("Anemometer buffer full");
-      fatal();
-    }
-
-    anemometer.reset();
-    minorPeriod.reset();
+  for (int i = 0; i < providers.size(); i++) {
+    providers.at(i)->step();
   }
 
-  // Do our major period things
-  if (majorPeriod.isComplete())
-  {
-    if (!bme.endReading())
-    {
-      Serial.println("Bad BME680 reading");
-      fatal();
+  unsigned long now = millis();
+  if (lastTransmit == 0 || now - lastTransmit > TRANSMIT_WAIT) {
+    lastTransmit = now;
+    WeatherReport report = {
+      windSpeed: NULL,
+      vaneDirection: NULL,
+      temperature: NULL,
+      pressure: NULL,
+      humidity: NULL,
+      gas: NULL,
+      rainfall: NULL,
+    };
+    for (int i = 0; i < providers.size(); i++) {
+      providers.at(i)->recordWeather(&report);
     }
-    bme.beginReading();
-
-    if (!weatherVane.performReading()) {
-      Serial.println("Bad weather vane reading");
-      fatal();
-    }
-
-    LoggerData data;
-    data.anemometerStatsSet = anemometerStatAggregator.getStats();
-    data.gas = bme.gas_resistance;
-    data.humidity = bme.humidity;
-    data.pressure = bme.pressure;
-    data.temperature = bme.temperature;
-    data.vaneDirection = weatherVane.direction;
-
-    if (!logger.post(data))
-    {
-      Serial.println("Bad HTTP response");
-      fatal();
-    }
-
-    esp_task_wdt_reset();
-
-    anemometerStatAggregator.reset();
-    majorPeriod.reset();
+    logger.post(&report);
   }
 }

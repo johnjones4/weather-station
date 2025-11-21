@@ -2,26 +2,31 @@
 #ifndef ANEMOMETER_H
 #define ANEMOMETER_H
 
-#define ANEMOMETER_BUFFER_SIZE 1000
+#include <Provider.h>
 
-class Anemometer
+#define ANEMOMETER_BUFFER_SIZE 1000
+#define ANEMOMETER_PIN 34
+#define ANEMOMETER_DEBOUNCE 125
+#define ANEMOMETER_CIRCUMFERENCE 0.502654824574
+#define SPEED_CALC_WAIT 5000
+
+class Anemometer : public Provider
 {
 private:
-// Configurations
-  int pin;
-  double circumfrence;
-  unsigned long debounceWait;
-
-// State
   bool lastState = false;
   unsigned long lastReadTime;
+  unsigned long firstReadTime;
   unsigned long readings[ANEMOMETER_BUFFER_SIZE];
   int currentReadingIndex = 0;
-public:
-  Anemometer(int _pin, int _debounceWait, double _circumfrence);
+  double currentSpeed = 0;
+
+  bool append(double speed);
   void reset();
-  void takeReading();
-  double getSpeed();
+  void calculateSpeed();
+public:
+  bool begin();
+  void step();
+  void recordWeather(WeatherReport* report);
 };
 
 #endif

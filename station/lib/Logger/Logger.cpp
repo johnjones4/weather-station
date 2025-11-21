@@ -10,17 +10,31 @@ Logger::Logger(String _url)
   url = _url;
 }
 
-bool Logger::post(LoggerData data)
+bool Logger::post(WeatherReport *data)
 {
+  Serial.println("Sending weather");
   DynamicJsonDocument doc(1024);
-  doc["temperature"] = data.temperature;
-  doc["gas"] = data.gas;
-  doc["pressure"] = data.pressure;
-  doc["relativeHumidity"] = data.humidity;
-  doc["anemometerMin"] = data.anemometerStatsSet.min;
-  doc["anemometerMax"] = data.anemometerStatsSet.max;
-  doc["anemometerAverage"] = data.anemometerStatsSet.average;
-  doc["vaneDirection"] = data.vaneDirection;
+  if (data->temperature != NULL) {
+    doc["temperature"] = *data->temperature;
+  }
+  if (data->gas != NULL) {
+    doc["gas"] = *data->gas;
+  }
+  if (data->pressure != NULL) {
+    doc["pressure"] = *data->pressure;
+  }
+  if (data->humidity != NULL) {
+    doc["humidity"] = *data->humidity;
+  }
+  if (data->windSpeed != NULL) {
+    doc["windSpeed"] = *data->windSpeed;
+  }
+  if (data->vaneDirection != NULL) {
+    doc["vaneDirection"] = *data->vaneDirection;
+  }
+  if (data->rainfall != NULL) {
+    doc["rainfall"] = *data->rainfall;
+  }
 
   String postData;
   serializeJson(doc, postData);

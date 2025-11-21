@@ -1,16 +1,18 @@
 #include <Adafruit_MCP23X17.h>
+#include <Provider.h>
 
 #ifndef WEATHERVANE_H
 #define WEATHERVANE_H
 
-class Weathervane
+class Weathervane : public Provider
 {
 private:
-  Adafruit_MCP23X17 mcp;
-public:
+  Adafruit_MCP23X17 *mcp;
   double direction = 0;
+public:
   bool begin();
-  bool performReading();
+  void step();
+  void recordWeather(WeatherReport* report);
 };
 
 #endif
