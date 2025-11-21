@@ -23,11 +23,7 @@
       const load = async () => {
         const res = await fetch('/api/weather?units=imperial')
         const info = await res.json()
-        if (!info.items || !info.items.length) {
-          return
-        }
-        const weather = info.items[info.items.length -1]
-        
+        const weather = info.average;
         timestampEl.textContent = new Date(Date.parse(weather.timestamp)).toLocaleString()
         temperatureEl.textContent = weather.temperature.toFixed(2)
         windSpeedEl.textContent = weather.windSpeed.toFixed(2)
