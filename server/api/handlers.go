@@ -34,11 +34,16 @@ func newPostWeatherHandler(store core.Store, transformers []core.Transformer, lo
 	return func(w http.ResponseWriter, r *http.Request) {
 		ct := r.Header.Get("Content-type")
 		if ct == "application/json" {
-			var weather core.Weather
-			err := readJson(r, &weather)
+			var request core.WeatherPayload
+			err := readJson(r, &request)
 			if err != nil {
 				errorResponse(w, http.StatusBadRequest, err, log)
 				return
+			}
+
+			weather := core.Weather{
+				WeatherPayload: request,
+				Timestamp:      time.Now(),
 			}
 
 			for _, t := range transformers {
@@ -63,6 +68,11 @@ func newPostWeatherHandler(store core.Store, transformers []core.Transformer, lo
 	}
 }
 
+type weatherResponse struct {
+	Readings []core.Weather `json:"readings"`
+	Average  core.WeatherReading
+}
+
 func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now().UTC()
@@ -75,17 +85,71 @@ func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.Handle
 			return
 		}
 
-		resp := map[string]any{}
+		resp := weatherResponse{
+			Readings: make([]core.Weather, 0, len(weathers)),
+			Average: core.WeatherReading{
+				WindSpeed:     core.Pointer(0.0),
+				VaneDirection: core.Pointer(0.0),
+				Temperature:   core.Pointer(0.0),
+				Pressure:      core.Pointer(0.0),
+				Humidity:      core.Pointer(0.0),
+				Gas:           core.Pointer(0.0),
+				Rainfall:      core.Pointer(0.0),
+			},
+		}
+		counts := core.WeatherReading{
+			WindSpeed:     core.Pointer(0.0),
+			VaneDirection: core.Pointer(0.0),
+			Temperature:   core.Pointer(0.0),
+			Pressure:      core.Pointer(0.0),
+			Humidity:      core.Pointer(0.0),
+			Gas:           core.Pointer(0.0),
+			Rainfall:      core.Pointer(0.0),
+		}
 
 		units := r.URL.Query().Get("units")
-		if units == "imperial" {
-			imperialWeathers := make([]core.WeatherImperial, len(weathers))
-			for i, w := range weathers {
-				imperialWeathers[i] = transformers.ConvertToImperial(w)
+		for _, w := range weathers {
+			if units == "imperial" {
+				w = transformers.ConvertToImperial(w)
 			}
-			resp["items"] = imperialWeathers
-		} else {
-			resp["items"] = weathers
+			resp.Readings = append(resp.Readings, w)
+			if w.WindSpeed != nil {
+				resp.Average.WindSpeed = core.Pointer(*resp.Average.WindSpeed + *w.WindSpeed)
+				counts.WindSpeed = core.Pointer(*counts.WindSpeed + 1)
+			}
+			if w.VaneDirection != nil {
+				resp.Average.VaneDirection = core.Pointer(*resp.Average.VaneDirection + *w.VaneDirection)
+				counts.VaneDirection = core.Pointer(*counts.VaneDirection + 1)
+			}
+			if w.Temperature != nil {
+				resp.Average.Temperature = core.Pointer(*resp.Average.Temperature + *w.Temperature)
+				counts.Temperature = core.Pointer(*counts.Temperature + 1)
+			}
+			if w.Pressure != nil {
+				resp.Average.Pressure = core.Pointer(*resp.Average.Pressure + *w.Pressure)
+				counts.Pressure = core.Pointer(*counts.Pressure + 1)
+			}
+			if w.Humidity != nil {
+				resp.Average.Humidity = core.Pointer(*resp.Average.Humidity + *w.Humidity)
+				counts.Humidity = core.Pointer(*counts.Humidity + 1)
+			}
+			if w.Gas != nil {
+				resp.Average.Gas = core.Pointer(*resp.Average.Gas + *w.Gas)
+				counts.Gas = core.Pointer(*counts.Gas + 1)
+			}
+			if w.Rainfall != nil {
+				resp.Average.Rainfall = core.Pointer(*resp.Average.Rainfall + *w.WindSpeed)
+				counts.Rainfall = core.Pointer(*counts.Rainfall + 1)
+			}
+		}
+		resp.Average = core.WeatherReading{
+			WindSpeed:     core.Pointer(*resp.Average.WindSpeed / *counts.WindSpeed),
+			VaneDirection: core.Pointer(*resp.Average.VaneDirection / *counts.VaneDirection),
+			Temperature:   core.Pointer(*resp.Average.Temperature / *counts.Temperature),
+			Pressure:      core.Pointer(*resp.Average.Pressure / *counts.Pressure),
+			Humidity:      core.Pointer(*resp.Average.Humidity / *counts.Humidity),
+			Gas:           core.Pointer(*resp.Average.Gas / *counts.Gas),
+			Rainfall:      core.Pointer(*resp.Average.Rainfall / *counts.Rainfall),
 		}
 
 		jsonResponse(w, http.StatusOK, resp, log)

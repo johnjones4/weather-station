@@ -30,9 +30,9 @@
         
         timestampEl.textContent = new Date(Date.parse(weather.timestamp)).toLocaleString()
         temperatureEl.textContent = weather.temperature.toFixed(2)
-        windSpeedEl.textContent = weather.anemometerAverage.toFixed(2)
+        windSpeedEl.textContent = weather.windSpeed.toFixed(2)
         pressureEl.textContent = weather.pressure.toFixed(2)
-        humidityEl.textContent = weather.relativeHumidity.toFixed(2)
+        humidityEl.textContent = weather.humidity.toFixed(2)
       }
       setInterval(load, 30000)
       load()

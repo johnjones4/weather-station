@@ -5,30 +5,24 @@ import (
 	"time"
 )
 
-type Weather struct {
-	Timestamp                    time.Time `json:"timestamp"`
-	AnemometerMin                float64   `json:"anemometerMin"`
-	AnemometerMax                float64   `json:"anemometerMax"`
-	AnemometerAverage            float64   `json:"anemometerAverage"`
-	VaneDirection                float64   `json:"vaneDirection"`
-	Temperature                  float64   `json:"temperature"`
-	TemperatureCalibrationFactor float64   `json:"temperatureCalibrationFactor"`
-	Pressure                     int       `json:"pressure"`
-	Gas                          int       `json:"gas"`
-	RelativeHumidity             float64   `json:"relativeHumidity"`
+type WeatherReading struct {
+	WindSpeed     *float64 `json:"windSpeed"`
+	VaneDirection *float64 `json:"vaneDirection"`
+	Temperature   *float64 `json:"temperature"`
+	Pressure      *float64 `json:"pressure"`
+	Humidity      *float64 `json:"humidity"`
+	Gas           *float64 `json:"gas"`
+	Rainfall      *float64 `json:"rainfall"`
 }
 
-type WeatherImperial struct {
-	Timestamp                    time.Time `json:"timestamp"`
-	AnemometerMin                float64   `json:"anemometerMin"`
-	AnemometerMax                float64   `json:"anemometerMax"`
-	AnemometerAverage            float64   `json:"anemometerAverage"`
-	VaneDirection                float64   `json:"vaneDirection"`
-	Temperature                  float64   `json:"temperature"`
-	TemperatureCalibrationFactor float64   `json:"temperatureCalibrationFactor"`
-	Pressure                     float64   `json:"pressure"`
-	Gas                          int       `json:"gas"`
-	RelativeHumidity             float64   `json:"relativeHumidity"`
+type WeatherPayload struct {
+	Source string `json:"source"`
+	WeatherReading
+}
+
+type Weather struct {
+	Timestamp time.Time `json:"timestamp"`
+	WeatherPayload
 }
 
 type Store interface {
