@@ -52,7 +52,7 @@ func (s *PGStore) Save(ctx context.Context, w *core.Weather) error {
 }
 
 func (s *PGStore) Get(ctx context.Context, start, end time.Time) ([]core.Weather, error) {
-	rows, err := s.pool.Query(ctx, "SELECT timestamp, source, wind_speed, vane_direction, temperature, pressure, humidity, gas, rainfall FROM weather WHERE tstamp >= $1 AND tstamp <= $2 ORDER BY tstamp", start, end)
+	rows, err := s.pool.Query(ctx, "SELECT timestamp, source, wind_speed, vane_direction, temperature, pressure, humidity, gas, rainfall FROM weather WHERE timestamp >= $1 AND timestamp <= $2 ORDER BY timestamp", start, end)
 	if err != nil {
 		return nil, err
 	}

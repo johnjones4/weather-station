@@ -24,11 +24,19 @@
         const res = await fetch('/api/weather?units=imperial')
         const info = await res.json()
         const weather = info.average;
-        timestampEl.textContent = new Date(Date.parse(weather.timestamp)).toLocaleString()
-        temperatureEl.textContent = weather.temperature.toFixed(2)
-        windSpeedEl.textContent = weather.windSpeed.toFixed(2)
-        pressureEl.textContent = weather.pressure.toFixed(2)
-        humidityEl.textContent = weather.humidity.toFixed(2)
+        timestampEl.textContent = new Date(Date.parse(info.readings[info.readings.length - 1].timestamp)).toLocaleString()
+        if (weather.temperature) {
+          temperatureEl.textContent = weather.temperature.toFixed(2);
+        }
+        if (weather.windSpeed) {
+          windSpeedEl.textContent = weather.windSpeed.toFixed(2);
+        }
+        if (weather.pressure) {
+          pressureEl.textContent = weather.pressure.toFixed(2)
+        }
+        if (weather.humidity) {
+          humidityEl.textContent = weather.humidity.toFixed(2)
+        }
       }
       setInterval(load, 30000)
       load()

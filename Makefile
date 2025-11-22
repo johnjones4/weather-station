@@ -8,8 +8,8 @@ info:
 	echo ${PROJECT} ${VERSION}
 
 container:
-	podman build -t ${TAG} ./server
-	podman push ${TAG}:latest
-	podman image rm ${TAG}:latest
+	docker build --platform linux/amd64 -t ${TAG} ./server
+	docker push ${TAG}:latest
+	docker image rm ${TAG}:latest
 
 ci: container

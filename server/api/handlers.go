@@ -143,17 +143,24 @@ func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.Handle
 			}
 		}
 		resp.Average = core.WeatherReading{
-			WindSpeed:     core.Pointer(*resp.Average.WindSpeed / *counts.WindSpeed),
-			VaneDirection: core.Pointer(*resp.Average.VaneDirection / *counts.VaneDirection),
-			Temperature:   core.Pointer(*resp.Average.Temperature / *counts.Temperature),
-			Pressure:      core.Pointer(*resp.Average.Pressure / *counts.Pressure),
-			Humidity:      core.Pointer(*resp.Average.Humidity / *counts.Humidity),
-			Gas:           core.Pointer(*resp.Average.Gas / *counts.Gas),
-			Rainfall:      core.Pointer(*resp.Average.Rainfall / *counts.Rainfall),
+			WindSpeed:     safeDivide(*resp.Average.WindSpeed, *counts.WindSpeed),
+			VaneDirection: safeDivide(*resp.Average.VaneDirection, *counts.VaneDirection),
+			Temperature:   safeDivide(*resp.Average.Temperature, *counts.Temperature),
+			Pressure:      safeDivide(*resp.Average.Pressure, *counts.Pressure),
+			Humidity:      safeDivide(*resp.Average.Humidity, *counts.Humidity),
+			Gas:           safeDivide(*resp.Average.Gas, *counts.Gas),
+			Rainfall:      safeDivide(*resp.Average.Rainfall, *counts.Rainfall),
 		}
 
 		jsonResponse(w, http.StatusOK, resp, log)
 	}
+}
+
+func safeDivide(a float64, b float64) *float64 {
+	if b == 0 {
+		return nil
+	}
+	return core.Pointer(a / b)
 }
 
 func newHealthHandler(store core.Store, log *zap.SugaredLogger) http.HandlerFunc {
