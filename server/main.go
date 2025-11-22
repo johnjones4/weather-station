@@ -24,7 +24,6 @@ func main() {
 
 	tx := []core.Transformer{
 		transformers.AddDate,
-		transformers.AdjustTemperature,
 	}
 
 	var db core.Store
