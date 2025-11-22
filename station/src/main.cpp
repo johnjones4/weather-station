@@ -15,7 +15,7 @@
 #include <RainGauge.h>
 
 #define WATCHDOG_WAIT 60000
-#define TRANSMIT_WAIT 10000
+#define TRANSMIT_WAIT 300000
 
 Providers providers;
 unsigned long lastTransmit;
