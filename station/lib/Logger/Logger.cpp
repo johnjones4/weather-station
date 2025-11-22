@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <../../include/secrets.h>
 
 #ifndef LOGGER_IMPL
 #define LOGGER_IMPL
@@ -14,6 +15,7 @@ bool Logger::post(WeatherReport *data)
 {
   Serial.println("Sending weather");
   DynamicJsonDocument doc(1024);
+  doc["source"] = SOURCE_NAME;
   if (data->temperature != NULL) {
     doc["temperature"] = *data->temperature;
   }

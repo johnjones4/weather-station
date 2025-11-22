@@ -3,7 +3,7 @@
 
 #include <Provider.h>
 
-#define RAIN_GAUGE_PIN 4
+#define RAIN_GAUGE_PIN 14
 #define ML_PER_FLIP 3.125
 #define RAINFALL_DEBOUNCE 200
 

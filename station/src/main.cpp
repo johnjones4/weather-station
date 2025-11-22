@@ -15,7 +15,7 @@
 #include <RainGauge.h>
 
 #define WATCHDOG_WAIT 60000
-#define TRANSMIT_WAIT 300000
+#define TRANSMIT_WAIT 10000
 
 Providers providers;
 unsigned long lastTransmit;
@@ -81,8 +81,6 @@ void setup()
   }
   
   Serial.println("Ready");
-
-  lastTransmit = millis();
 }
 
 void loop() 

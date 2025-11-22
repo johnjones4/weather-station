@@ -5,10 +5,12 @@ bool RainGauge::begin()
 {
     pinMode(RAIN_GAUGE_PIN, INPUT_PULLUP);
     lastFlip = millis();
+    return true;
 }
 
 void RainGauge::recordWeather(WeatherReport* report)
 {
+    Serial.printf("%d flips\n", this->flips);
     volume = (double)this->flips * (double)ML_PER_FLIP;
     report->rainfall = &volume;
     this->flips = 0;
