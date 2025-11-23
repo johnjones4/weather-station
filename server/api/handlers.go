@@ -83,7 +83,7 @@ type weatherResponse struct {
 func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now().UTC()
-		start := readDateParameter(r, "start", now.Add(time.Minute*-30))
+		start := readDateParameter(r, "start", now.Add(time.Hour*-12))
 		end := readDateParameter(r, "end", now)
 
 		weathers, err := store.Get(r.Context(), start, end)
