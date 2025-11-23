@@ -23,7 +23,7 @@
       const load = async () => {
         const res = await fetch('/api/weather?units=imperial')
         const info = await res.json()
-        const weather = info.averages[0];
+        const weather = info.periods[0].averages;
         timestampEl.textContent = new Date(Date.parse(info.readings[info.readings.length - 1].timestamp)).toLocaleString()
         if (weather.temperature) {
           temperatureEl.textContent = weather.temperature.toFixed(2);

@@ -69,14 +69,15 @@ func newPostWeatherHandler(store core.Store, transformers []core.Transformer, lo
 }
 
 type weatherAverage struct {
-	Period   string              `json:"period"`
-	Start    time.Time           `json:"start"`
-	Averages core.WeatherReading `json:"averages"`
+	Period        string              `json:"period"`
+	Start         time.Time           `json:"start"`
+	Averages      core.WeatherReading `json:"averages"`
+	RainfallTotal float64             `json:"rainfallTotal"`
 }
 
 type weatherResponse struct {
 	Readings []core.Weather   `json:"readings"`
-	Averages []weatherAverage `json:"averages"`
+	Periods  []weatherAverage `json:"periods"`
 }
 
 func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.HandlerFunc {
@@ -91,12 +92,13 @@ func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.Handle
 			return
 		}
 
-		periods := map[string]time.Time{
+		allPeriods := map[string]time.Time{
 			"5min":  end.Add(time.Minute * -5),
 			"1hr":   end.Add(-time.Hour),
 			"12hrs": end.Add(time.Hour * -12),
 		}
-		averages := make(map[string][2]core.WeatherReading)
+		periods := make(map[string][2]core.WeatherReading)
+		rainfallTotals := make(map[string]float64)
 		zero := core.WeatherReading{
 			WindSpeed:     core.Pointer(0.0),
 			VaneDirection: core.Pointer(0.0),
@@ -106,15 +108,17 @@ func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.Handle
 			Gas:           core.Pointer(0.0),
 			Rainfall:      core.Pointer(0.0),
 		}
-		for key, start := range periods {
+		for key, start := range allPeriods {
 			if start.Before(start) {
 				continue
 			}
-			averages[key] = [2]core.WeatherReading{zero, zero}
+			periods[key] = [2]core.WeatherReading{zero, zero}
+			rainfallTotals[key] = 0
 		}
 
 		resp := weatherResponse{
 			Readings: make([]core.Weather, 0, len(weathers)),
+			Periods:  make([]weatherAverage, 0, len(periods)),
 		}
 
 		units := r.URL.Query().Get("units")
@@ -123,8 +127,8 @@ func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.Handle
 				w = transformers.ConvertToImperial(w)
 			}
 			resp.Readings = append(resp.Readings, w)
-			for key, info := range averages {
-				if w.Timestamp.Before(periods[key]) {
+			for key, info := range periods {
+				if w.Timestamp.Before(allPeriods[key]) {
 					continue
 				}
 				counts := info[0]
@@ -154,16 +158,17 @@ func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.Handle
 					counts.Gas = core.Pointer(*counts.Gas + 1)
 				}
 				if w.Rainfall != nil {
-					average.Rainfall = core.Pointer(*average.Rainfall + *w.WindSpeed)
+					average.Rainfall = core.Pointer(*average.Rainfall + *w.Rainfall)
 					counts.Rainfall = core.Pointer(*counts.Rainfall + 1)
+					rainfallTotals[key] += *average.Rainfall
 				}
-				averages[key] = [2]core.WeatherReading{counts, average}
+				periods[key] = [2]core.WeatherReading{counts, average}
 			}
 		}
-		for key, info := range averages {
-			resp.Averages = append(resp.Averages, weatherAverage{
+		for key, info := range periods {
+			resp.Periods = append(resp.Periods, weatherAverage{
 				Period: key,
-				Start:  periods[key],
+				Start:  allPeriods[key],
 				Averages: core.WeatherReading{
 					WindSpeed:     safeDivide(*info[1].WindSpeed, *info[0].WindSpeed),
 					VaneDirection: safeDivide(*info[1].VaneDirection, *info[0].VaneDirection),
@@ -173,6 +178,7 @@ func newGetWeathersHandler(store core.Store, log *zap.SugaredLogger) http.Handle
 					Gas:           safeDivide(*info[1].Gas, *info[0].Gas),
 					Rainfall:      safeDivide(*info[1].Rainfall, *info[0].Rainfall),
 				},
+				RainfallTotal: rainfallTotals[key],
 			})
 		}
 
